@@ -34,7 +34,7 @@ button {
 .changeData {
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: center;
 }
 
 .dataItem {
@@ -42,4 +42,33 @@ button {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin: 20px;
+}
+
+.floatLeft {
+  display: flex;
+  flex-direction: column;
+  float: left;
+}
+
+.floatRight {
+  display: flex;
+  flex-direction: column;
+  float: right;
+}
+
+.floatEle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 5rem 2rem;
+}
+
+.ele {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
 }

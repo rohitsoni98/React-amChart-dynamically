@@ -3,8 +3,7 @@ import * as am5 from "@amcharts/amcharts5";
 import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import data from "./Data";
-import { GithubPicker } from "react-color";
-
+import { GithubPicker, TwitterPicker, BlockPicker } from "react-color";
 const ChartApp = () => {
   let rootChart = useRef();
   let firstRender = useRef(true);
@@ -15,6 +14,8 @@ const ChartApp = () => {
     strokeWidth: 1,
     cornerRadiusTL: 0,
     cornerRadiusTR: 0,
+    series1Width: 50,
+    series2Width: 50,
     isCursor: false,
     isLegend: false,
     isZoom: false,
@@ -22,7 +23,11 @@ const ChartApp = () => {
     list: "data1",
   });
 
-  console.log(state.list);
+  const [toolTip, setToolTip] = useState({
+    fillColor: "darkGray",
+    strokeColor: "black",
+    textColor: "#fff",
+  });
 
   useEffect(() => {
     if (firstRender.current) {
@@ -39,7 +44,7 @@ const ChartApp = () => {
         barChart.dispose();
       };
     }
-  }, [state]);
+  }, [state, toolTip]);
   function createBarChart() {
     rootChart.current.setThemes([am5themes_Animated.new(rootChart.current)]);
     let chart = rootChart.current.container.children.push(
@@ -92,11 +97,16 @@ const ChartApp = () => {
     series2.data.setAll(data[state.list]);
 
     series1.columns.template.setAll({
+      width: am5.percent(state.series1Width),
       fill: state.fillColor,
       strokeWidth: state.strokeWidth,
       stroke: state.strokeColor,
       cornerRadiusTL: state.cornerRadiusTL,
       cornerRadiusTR: state.cornerRadiusTR,
+    });
+
+    series2.columns.template.setAll({
+      width: am5.percent(state.series2Width),
     });
 
     // Add zoomX
@@ -133,11 +143,30 @@ const ChartApp = () => {
     {
       state.isTooltip &&
         series1.columns.template.setAll({
-          tooltipText: "[bold]{category} : {value1}",
+          tooltipText: "[bold]{name}[/]\n{category}: {value1}",
+          getLabelFillFromSprite: true,
           tooltipX: am5.percent(50),
           tooltipY: am5.percent(-5),
         });
     }
+
+    let tooltip = am5.Tooltip.new(rootChart.current, {
+      getFillFromSprite: false,
+      getStrokeFromSprite: false,
+      autoTextColor: false,
+      getLabelFillFromSprite: false,
+    });
+
+    tooltip.get("background").setAll({
+      fill: toolTip.fillColor,
+      stroke: toolTip.strokeColor,
+    });
+
+    tooltip.label.setAll({
+      fill: toolTip.textColor,
+    });
+
+    series1.set("tooltip", tooltip);
 
     return chart;
   }
@@ -282,10 +311,57 @@ const ChartApp = () => {
           </button>
         </div>
       </div>
-      <div
-        id="chartdiv"
-        style={{ width: "100%", height: "500px", alignSelf: "end" }}
-      ></div>
+      <div style={{ width: "100%" }}>
+        <div className="floatLeft">
+          <div className="floatEle">
+            <p>BG Color for Tooltip</p>
+            <BlockPicker
+              color={toolTip.fillColor}
+              onChangeComplete={(color) =>
+                setToolTip((preState) => ({
+                  ...preState,
+                  fillColor: color.hex,
+                }))
+              }
+            />
+          </div>
+        </div>
+        <div className="floatRight">
+          <div className="floatEle">
+            <p>Text Color for Tooltip</p>
+            <BlockPicker
+              color={toolTip.textColor}
+              onChangeComplete={(color) =>
+                setToolTip((preState) => ({
+                  ...preState,
+                  textColor: color.hex,
+                }))
+              }
+            />
+          </div>
+        </div>
+        <div
+          id="chartdiv"
+          style={{
+            width: "70%",
+            height: "500px",
+            alignSelf: "end",
+            margin: "auto",
+          }}
+        ></div>
+        <div className="ele">
+          <p>Stroke Color for Tooltip</p>
+          <TwitterPicker
+            color={toolTip.strokeColor}
+            onChangeComplete={(color) =>
+              setToolTip((preState) => ({
+                ...preState,
+                strokeColor: color.hex,
+              }))
+            }
+          />
+        </div>
+      </div>
       <div className="changeData">
         <div className="dataItem">
           <p>Dynamic Data Feature</p>
@@ -294,10 +370,36 @@ const ChartApp = () => {
               setState((pre) => ({ ...pre, list: e.target.value }))
             }
           >
-            <option value={"data1"}>Initial Value</option>
-            <option value={"data2"}>Data 2</option>
-            <option value={"data3"}>Data 3</option>
-            <option value={"data4"}>Data 4</option>
+            <option value={"data1"}>Initial DataValue</option>
+            <option value={"data2"}>Data2 Value</option>
+            <option value={"data3"}>Data3 Value</option>
+            <option value={"data4"}>Data4 Value</option>
+          </select>
+        </div>
+        <div className="dataItem">
+          <p>Dynamic Width for S1</p>
+          <select
+            onChange={(e) =>
+              setState((pre) => ({ ...pre, series1Width: e.target.value }))
+            }
+          >
+            <option value={50}>Initial Width</option>
+            <option value={60}>Inc Width by 60</option>
+            <option value={70}>Inc Width by 70</option>
+            <option value={75}>Inc Width by 75</option>
+          </select>
+        </div>
+        <div className="dataItem">
+          <p>Dynamic Width for S2</p>
+          <select
+            onChange={(e) =>
+              setState((pre) => ({ ...pre, series2Width: e.target.value }))
+            }
+          >
+            <option value={50}>Initial Width</option>
+            <option value={60}>Inc Width by 60</option>
+            <option value={70}>Inc Width by 70</option>
+            <option value={75}>Inc Width by 75</option>
           </select>
         </div>
       </div>
