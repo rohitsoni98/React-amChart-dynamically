@@ -9,13 +9,11 @@ const ChartApp = () => {
   let firstRender = useRef(true);
 
   const [state, setState] = useState({
-    strokeColor: "gray",
-    fillColor: "darkGray",
+    strokeColor: "#262626",
     strokeWidth: 1,
     cornerRadiusTL: 0,
     cornerRadiusTR: 0,
-    series1Width: 50,
-    series2Width: 50,
+    seriesWidth: 50,
     isCursor: false,
     isLegend: false,
     isZoom: false,
@@ -24,9 +22,9 @@ const ChartApp = () => {
   });
 
   const [toolTip, setToolTip] = useState({
-    fillColor: "darkGray",
     strokeColor: "black",
     textColor: "#fff",
+    strokeWidth: 1,
   });
 
   useEffect(() => {
@@ -73,41 +71,73 @@ const ChartApp = () => {
     );
     xAxis.data.setAll(data[state.list]);
 
-    let series1 = chart.series.push(
-      am5xy.ColumnSeries.new(rootChart.current, {
-        name: "Series1",
-        xAxis: xAxis,
-        yAxis: yAxis,
-        valueYField: "value1",
-        categoryXField: "category",
-      })
-    );
+    // function for making series
+    function makeSeries(name, fieldName) {
+      var series = chart.series.push(
+        am5xy.ColumnSeries.new(rootChart.current, {
+          name: name,
+          xAxis: xAxis,
+          yAxis: yAxis,
+          valueYField: fieldName,
+          categoryXField: "category",
+        })
+      );
 
-    let series2 = chart.series.push(
-      am5xy.ColumnSeries.new(rootChart.current, {
-        name: "Series2",
-        xAxis: xAxis,
-        yAxis: yAxis,
-        valueYField: "value2",
-        categoryXField: "category",
-      })
-    );
+      // Add Tooltip
+      {
+        state.isTooltip &&
+          series.columns.template.setAll({
+            tooltipText: "[bold]{name}[/]\n{category}: {value1}",
+            getLabelFillFromSprite: true,
+            tooltipX: am5.percent(50),
+            tooltipY: am5.percent(-2),
+          });
+      }
 
-    series1.data.setAll(data[state.list]);
-    series2.data.setAll(data[state.list]);
+      // Add Tooltip Features
+      let tooltip = am5.Tooltip.new(rootChart.current, {
+        getFillFromSprite: true,
+        getStrokeFromSprite: false,
+        autoTextColor: false,
+        getLabelFillFromSprite: false,
+      });
 
-    series1.columns.template.setAll({
-      width: am5.percent(state.series1Width),
-      fill: state.fillColor,
-      strokeWidth: state.strokeWidth,
-      stroke: state.strokeColor,
-      cornerRadiusTL: state.cornerRadiusTL,
-      cornerRadiusTR: state.cornerRadiusTR,
-    });
+      tooltip.get("background").setAll({
+        stroke: toolTip.strokeColor,
+        strokeWidth: toolTip.strokeWidth,
+      });
 
-    series2.columns.template.setAll({
-      width: am5.percent(state.series2Width),
-    });
+      tooltip.label.setAll({
+        fill: toolTip.textColor,
+      });
+
+      series.set("tooltip", tooltip);
+
+      // Series Features
+      series.columns.template.setAll({
+        width: am5.percent(state.seriesWidth),
+        strokeWidth: state.strokeWidth,
+        cornerRadiusTL: state.cornerRadiusTL,
+        cornerRadiusTR: state.cornerRadiusTR,
+        stroke: state.strokeColor,
+      });
+
+      series.data.setAll(data[state.list]);
+
+      series.bullets.push(function () {
+        return am5.Bullet.new(rootChart.current, {
+          locationY: 0,
+          sprite: am5.Label.new(rootChart.current, {
+            fill: rootChart.current.interfaceColors.get("alternativeText"),
+            centerY: 0,
+            centerX: am5.p50,
+            populateText: true,
+          }),
+        });
+      });
+    }
+    makeSeries("Series1", "value1");
+    makeSeries("Series2", "value2");
 
     // Add zoomX
     {
@@ -125,7 +155,6 @@ const ChartApp = () => {
     }
 
     // Add legend
-
     {
       state.isLegend &&
         chart.children
@@ -138,35 +167,6 @@ const ChartApp = () => {
       state.isCursor &&
         chart.set("cursor", am5xy.XYCursor.new(rootChart.current, {}));
     }
-
-    // Add Tooltip
-    {
-      state.isTooltip &&
-        series1.columns.template.setAll({
-          tooltipText: "[bold]{name}[/]\n{category}: {value1}",
-          getLabelFillFromSprite: true,
-          tooltipX: am5.percent(50),
-          tooltipY: am5.percent(-5),
-        });
-    }
-
-    let tooltip = am5.Tooltip.new(rootChart.current, {
-      getFillFromSprite: false,
-      getStrokeFromSprite: false,
-      autoTextColor: false,
-      getLabelFillFromSprite: false,
-    });
-
-    tooltip.get("background").setAll({
-      fill: toolTip.fillColor,
-      stroke: toolTip.strokeColor,
-    });
-
-    tooltip.label.setAll({
-      fill: toolTip.textColor,
-    });
-
-    series1.set("tooltip", tooltip);
 
     return chart;
   }
@@ -206,7 +206,7 @@ const ChartApp = () => {
       </h1>
       <div className="series1-Box">
         <div className="element">
-          <p>Stroke color for s1</p>
+          <p>Stroke color for Series</p>
           <GithubPicker
             color={state.strokeColor}
             onChangeComplete={(color) =>
@@ -216,17 +216,7 @@ const ChartApp = () => {
         </div>
 
         <div className="element">
-          <p>Fill color for s1</p>
-          <GithubPicker
-            color={state.fillColor}
-            onChangeComplete={(color) =>
-              setState((preState) => ({ ...preState, fillColor: color.hex }))
-            }
-          />
-        </div>
-
-        <div className="element">
-          <p>Stroke Width for s1</p>
+          <p>Stroke Width for Series</p>
           <select
             onChange={(e) =>
               setState((preState) => ({
@@ -254,7 +244,7 @@ const ChartApp = () => {
           </button>
         </div>
         <div className="element">
-          <p>Corner RadiusTL for s1</p>
+          <p>Corner RadiusTL for Series</p>
           <input
             value={state.cornerRadiusTL}
             onChange={(e) =>
@@ -268,7 +258,7 @@ const ChartApp = () => {
           </button>
         </div>
         <div className="element">
-          <p>Corner RadiusTR for s1</p>
+          <p>Corner RadiusTR for Series</p>
           <input
             value={state.cornerRadiusTR}
             onChange={(e) =>
@@ -312,20 +302,6 @@ const ChartApp = () => {
         </div>
       </div>
       <div style={{ width: "100%" }}>
-        <div className="floatLeft">
-          <div className="floatEle">
-            <p>BG Color for Tooltip</p>
-            <BlockPicker
-              color={toolTip.fillColor}
-              onChangeComplete={(color) =>
-                setToolTip((preState) => ({
-                  ...preState,
-                  fillColor: color.hex,
-                }))
-              }
-            />
-          </div>
-        </div>
         <div className="floatRight">
           <div className="floatEle">
             <p>Text Color for Tooltip</p>
@@ -349,6 +325,20 @@ const ChartApp = () => {
             margin: "auto",
           }}
         ></div>
+        <div className="ele">
+          <p>Change Tooltip Stroke width</p>
+          <select
+            onChange={(e) =>
+              setToolTip((pre) => ({ ...pre, strokeWidth: e.target.value }))
+            }
+          >
+            <option value={1}>Initial Value</option>
+            <option value={2}>Inc by 2</option>
+            <option value={3}>Inc by 3</option>
+            <option value={4}>Inc by 4</option>
+            <option value={5}>Inc by 5</option>
+          </select>
+        </div>
         <div className="ele">
           <p>Stroke Color for Tooltip</p>
           <TwitterPicker
@@ -377,23 +367,10 @@ const ChartApp = () => {
           </select>
         </div>
         <div className="dataItem">
-          <p>Dynamic Width for S1</p>
+          <p>Dynamic Width for Series</p>
           <select
             onChange={(e) =>
-              setState((pre) => ({ ...pre, series1Width: e.target.value }))
-            }
-          >
-            <option value={50}>Initial Width</option>
-            <option value={60}>Inc Width by 60</option>
-            <option value={70}>Inc Width by 70</option>
-            <option value={75}>Inc Width by 75</option>
-          </select>
-        </div>
-        <div className="dataItem">
-          <p>Dynamic Width for S2</p>
-          <select
-            onChange={(e) =>
-              setState((pre) => ({ ...pre, series2Width: e.target.value }))
+              setState((pre) => ({ ...pre, seriesWidth: e.target.value }))
             }
           >
             <option value={50}>Initial Width</option>

@@ -45,12 +45,6 @@ button {
   margin: 20px;
 }
 
-.floatLeft {
-  display: flex;
-  flex-direction: column;
-  float: left;
-}
-
 .floatRight {
   display: flex;
   flex-direction: column;
